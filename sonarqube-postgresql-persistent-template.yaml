@@ -1,20 +1,14 @@
-apiVersion: template.openshift.io/v1
+apiVersion: v1
 kind: Template
-labels:
-  template: sonarqube-postgresql-persistent-template
-message: |-
-  The following service(s) have been created in your project: ${SONARQUBE_SERVICE_NAME}. 
-  Login to SonarQube with the default admin user: admin/admin
 metadata:
-  annotations:
-    description: |-
-      The SonarQube OpenShift persistent template with postgre SQL.
-    openshift.io/display-name: SonarQube
-    openshift.io/documentation-url: https://docs.openshift.org/latest/using_images/db_images/postgresql.html
-    openshift.io/long-description: The SonarQube OpenShift template.
-    tags: instant-app,sonarqube
   creationTimestamp: null
-  name: sonarqube-postgresql-persistent
+  labels:
+    name: sonarqube
+  annotations:
+    description: The SonarQube OpenShift template
+    tags: instant-app,sonarqube
+  name: sonarqube
+message: "Login to SonarQube with the default admin user: admin/admin"
 objects:
 - apiVersion: v1
   kind: Secret
@@ -32,20 +26,35 @@ objects:
   kind: Route
   metadata:
     annotations:
-      description: Route for SonarQube's http service.
-      openshift.io/host.generated: true
+      openshift.io/host.generated: "true"
     creationTimestamp: null
     name: ${SONARQUBE_SERVICE_NAME}
   spec:
-    tls:
-      insecureEdgeTerminationPolicy: Redirect
-      termination: edge
     port:
-      targetPort: 9000-tcp
+     targetPort: 9000-tcp 
     to:
       kind: Service
       name: ${SONARQUBE_SERVICE_NAME}
+      weight: 100
     wildcardPolicy: None
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      service.alpha.openshift.io/dependencies: '[{"name":"postgresql","namespace":"","kind":"Service"}]'
+    name: ${SONARQUBE_SERVICE_NAME}
+  spec:
+    ports:
+    - name: 9000-tcp
+      port: 9000
+      protocol: TCP
+      targetPort: 9000
+    selector:
+      name: ${SONARQUBE_SERVICE_NAME}
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
 - apiVersion: v1
   kind: Service
   metadata:
@@ -66,30 +75,15 @@ objects:
   status:
     loadBalancer: {}
 - apiVersion: v1
-  kind: Service
+  kind: PersistentVolumeClaim
   metadata:
-    annotations:
-      service.alpha.openshift.io/dependencies: '[{"name": "${DATABASE_SERVICE_NAME}","namespace": "", "kind": "Service"}]'
-    creationTimestamp: null
-    name: ${SONARQUBE_SERVICE_NAME}
+    name: ${SONARQUBE_SERVICE_NAME}-data
   spec:
-    ports:
-    - name: 9000-tcp
-      port: 9000
-      protocol: TCP
-      targetPort: 9000
-    selector:
-      name: ${SONARQUBE_SERVICE_NAME}
-    sessionAffinity: None
-    type: ClusterIP
-  status:
-    loadBalancer: {}
-- apiVersion: v1
-  kind: ImageStream
-  metadata:
-    labels:
-      application: ${SONARQUBE_SERVICE_NAME}
-    name: ${SONARQUBE_SERVICE_NAME}
+    accessModes:
+    - ReadWriteMany
+    resources:
+      requests:
+        storage: ${SONARQUBE_VOLUME_CAPACITY}
 - apiVersion: v1
   kind: PersistentVolumeClaim
   metadata:
@@ -101,15 +95,11 @@ objects:
       requests:
         storage: ${VOLUME_CAPACITY}
 - apiVersion: v1
-  kind: PersistentVolumeClaim
+  kind: ImageStream
   metadata:
-    name: ${SONARQUBE_SERVICE_NAME}-data
-  spec:
-    accessModes:
-    - ReadWriteOnce
-    resources:
-      requests:
-        storage: ${SONARQUBE_VOLUME_CAPACITY}
+    labels:
+      application: ${SONARQUBE_SERVICE_NAME}
+    name: ${SONARQUBE_SERVICE_NAME}
 - apiVersion: v1
   kind: BuildConfig
   metadata:
@@ -118,6 +108,7 @@ objects:
     creationTimestamp: null
     labels:
       app: ${SONARQUBE_SERVICE_NAME}
+      appName: ${SONARQUBE_SERVICE_NAME}
     name: ${SONARQUBE_SERVICE_NAME}
   spec:
     nodeSelector: null
@@ -137,45 +128,49 @@ objects:
       dockerStrategy:
         dockerfilePath: Dockerfile
         env:
-          name: SONAR_PLUGINS_LIST
+        - name: SONAR_PLUGINS_LIST
           value: ${SONAR_PLUGINS_LIST}
       type: Docker
     triggers:
-      - github:
-          secret: O6xJHmb-YAIiDPxoRrtH
-        type: GitHub
-      - generic:
-          secret: gxIn3u86-kvq74eCzYtq
-        type: Generic
-      - imageChange: {}
-        type: ImageChange
-      - type: ConfigChange
+    - github:
+        secret: tu5UyJNNhAyxXYrcnDTZ
+      type: GitHub
+    - generic:
+        secret: xhUU0WVDG3eA2Yu89zGe
+      type: Generic
+    - type: ConfigChange
+    - imageChange: {}
+      type: ImageChange
   status:
     lastVersion: 0
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
-    creationTimestamp: null
+    labels:
+      app: ${SONARQUBE_SERVICE_NAME}
+      appName: ${SONARQUBE_SERVICE_NAME}
+      name: ${SONARQUBE_SERVICE_NAME}
     name: ${SONARQUBE_SERVICE_NAME}
   spec:
     replicas: 1
     selector:
-      name: ${SONARQUBE_SERVICE_NAME}
+      app: ${SONARQUBE_SERVICE_NAME}
+      deploymentconfig: ${SONARQUBE_SERVICE_NAME}
     strategy:
       activeDeadlineSeconds: 21600
       resources: {}
       rollingParams:
         intervalSeconds: 1
-        maxSurge: "25%"
-        maxUnavailable: "25%"
+        maxSurge: 25%
+        maxUnavailable: 25%
         timeoutSeconds: 600
         updatePeriodSeconds: 1
       type: Rolling
     template:
       metadata:
-        creationTimestamp: null
         labels:
-          name: ${SONARQUBE_SERVICE_NAME}
+          app: ${SONARQUBE_SERVICE_NAME}
+          deploymentconfig: ${SONARQUBE_SERVICE_NAME}
       spec:
         containers:
         - env:
@@ -190,61 +185,59 @@ objects:
           - name: SONARQUBE_JDBC_URL
             value: jdbc:${DATABASE_SERVICE_NAME}://${DATABASE_SERVICE_NAME}:5432/${POSTGRESQL_DATABASE}
           - name: SONARQUBE_BUILDBREAKER_MAX_ATTEMPTS
-            value: 30
+            value: ${SONARQUBE_BUILDBREAKER_MAX_ATTEMPTS}
           - name: SONARQUBE_BUILDBREAKER_INTERVAL
-            value: 20000
+            value: ${SONARQUBE_BUILDBREAKER_INTERVAL}
           - name: SONARQUBE_BUILDBREAKER_THRESHOLD
-            value: "CRITICAL"
+            value: ${SONARQUBE_BUILDBREAKER_THRESHOLD}
           - name: SONAR_BUILDBREAKER_DISABLE
-            value: true
-          - name: SONARQUBE_VERSION
-            value: "7.0"
-        - capabilities: {}
-          image: ' '
+            value: ${SONAR_BUILDBREAKER_DISABLE}
           imagePullPolicy: Always
           livenessProbe:
-            failureThreshold: 30
+            failureThreshold: 3
             httpGet:
               path: /
               port: 9000
+              scheme: HTTP
             initialDelaySeconds: 45
+            periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 3
           name: ${SONARQUBE_SERVICE_NAME}
-          resources: 
+          ports:
+          - containerPort: 9000
+            protocol: TCP
+          resources:
             limits:
               cpu: ${SONARQUBE_CPU_LIMIT}
               memory: ${SONARQUBE_MEMORY_LIMIT}
             requests:
-              cpu: "500m"
-              memory: "1Gi"              
-          securityContext: {}
-          ports:
-            - containerPort: 9000
-              protocol: TCP          
+              cpu: 500m
+              memory: "1Gi"
           terminationMessagePath: /dev/termination-log
           volumeMounts:
           - mountPath: /opt/sonarqube/data
-            name: ${SONARQUBE_SERVICE_NAME}-data
-        dnsPolicy: ClusterFirst          
+            name: ${SONARQUBE_SERVICE_NAME}
+        dnsPolicy: ClusterFirst
         restartPolicy: Always
+        securityContext: {}
         terminationGracePeriodSeconds: 30
         volumes:
-        - persistentVolumeClaim:
-            claimName: ${SONARQUBE_SERVICE_NAME}-data 
-          name: ${SONARQUBE_SERVICE_NAME}-data
+        - name: ${SONARQUBE_SERVICE_NAME}
+          persistentVolumeClaim:
+            claimName: ${SONARQUBE_SERVICE_NAME}-data
     test: false
     triggers:
+    - type: ConfigChange
     - imageChangeParams:
         automatic: true
         containerNames:
         - ${SONARQUBE_SERVICE_NAME}
         from:
           kind: ImageStreamTag
-          name: ${SONARQUBE_SERVICE_NAME}
-        lastTriggeredImage: ""
+          name: ${SONARQUBE_SERVICE_NAME}:latest
       type: ImageChange
-    - type: ConfigChange    
+  status: {}
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
@@ -351,19 +344,17 @@ parameters:
   generate: expression
   name: POSTGRESQL_USER
   required: true
-  value: sonar
 - description: Password for the PostgreSQL connection user.
   displayName: PostgreSQL Connection Password
   from: '[a-zA-Z0-9]{16}'
   generate: expression
   name: POSTGRESQL_PASSWORD
   required: true
-  value: sonar
 - description: Name of the PostgreSQL database accessed.
   displayName: PostgreSQL Database Name
   name: POSTGRESQL_DATABASE
   required: true
-  value: sonar
+  value: sampledb
 - description: Volume space available for data, e.g. 512Mi, 2Gi.
   displayName: Volume Capacity
   name: VOLUME_CAPACITY
@@ -378,12 +369,12 @@ parameters:
   displayName: SonarQube CPU limit
   name: SONARQUBE_CPU_LIMIT
   required: true
-  value: 2
+  value: "2"
 - description: The maximum amount of memory that the SonarQube application is allowed to use (Min is 512Mi)
   displayName: SonarQube Memory Limit
   name: SONARQUBE_MEMORY_LIMIT
   required: true
-  value: 512Mi
+  value: "512Mi"
 - description: The name of the SonarQube Service exposed for the route.
   displayName: SonarQube Service Name
   name: SONARQUBE_SERVICE_NAME

@@ -9,8 +9,8 @@ ENV NAME=sonarqube \
     SONARQUBE_SHORT_VER=7 \
     VERSION=0
 
-ENV APP_HOME=/opt/sonarqube \
-ENV HOME=${APP_HOME} \
+ENV APP_HOME=/opt/sonarqube
+ENV HOME=${APP_HOME}
 ENV PATH=$PATH:${APP_HOME}/bin
 
 ENV SONARQUBE_DOWNLOAD_URL=https://sonarsource.bintray.com/Distribution/sonarqube/sonarqube-${SONARQUBE_VERSION}.zip
