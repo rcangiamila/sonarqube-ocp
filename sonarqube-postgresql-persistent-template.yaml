@@ -25,27 +25,23 @@ objects:
 - apiVersion: v1
   kind: Route
   metadata:
-    annotations:
-      openshift.io/host.generated: "true"
     creationTimestamp: null
     name: ${SONARQUBE_SERVICE_NAME}
   spec:
-    port:
-     targetPort: 9000-tcp 
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge  
     to:
       kind: Service
       name: ${SONARQUBE_SERVICE_NAME}
-      weight: 100
-    wildcardPolicy: None
 - apiVersion: v1
   kind: Service
-  metadata:
-    annotations:
-      service.alpha.openshift.io/dependencies: '[{"name":"postgresql","namespace":"","kind":"Service"}]'
+  metadata:    
     name: ${SONARQUBE_SERVICE_NAME}
   spec:
     ports:
     - name: 9000-tcp
+      nodePort: 0
       port: 9000
       protocol: TCP
       targetPort: 9000
@@ -53,8 +49,6 @@ objects:
       name: ${SONARQUBE_SERVICE_NAME}
     sessionAffinity: None
     type: ClusterIP
-  status:
-    loadBalancer: {}
 - apiVersion: v1
   kind: Service
   metadata:
@@ -147,15 +141,13 @@ objects:
   kind: DeploymentConfig
   metadata:
     labels:
-      app: ${SONARQUBE_SERVICE_NAME}
-      appName: ${SONARQUBE_SERVICE_NAME}
+      creationTimestamp: null
       name: ${SONARQUBE_SERVICE_NAME}
     name: ${SONARQUBE_SERVICE_NAME}
   spec:
     replicas: 1
     selector:
-      app: ${SONARQUBE_SERVICE_NAME}
-      deploymentconfig: ${SONARQUBE_SERVICE_NAME}
+      name: ${SONARQUBE_SERVICE_NAME}
     strategy:
       activeDeadlineSeconds: 21600
       resources: {}
@@ -168,9 +160,9 @@ objects:
       type: Rolling
     template:
       metadata:
+        creationTimestamp: null
         labels:
-          app: ${SONARQUBE_SERVICE_NAME}
-          deploymentconfig: ${SONARQUBE_SERVICE_NAME}
+          name: ${SONARQUBE_SERVICE_NAME}
       spec:
         containers:
         - env:
@@ -217,13 +209,13 @@ objects:
           terminationMessagePath: /dev/termination-log
           volumeMounts:
           - mountPath: /opt/sonarqube/data
-            name: ${SONARQUBE_SERVICE_NAME}
+            name: ${SONARQUBE_SERVICE_NAME}-data
         dnsPolicy: ClusterFirst
         restartPolicy: Always
         securityContext: {}
         terminationGracePeriodSeconds: 30
         volumes:
-        - name: ${SONARQUBE_SERVICE_NAME}
+        - name: ${SONARQUBE_SERVICE_NAME}-data
           persistentVolumeClaim:
             claimName: ${SONARQUBE_SERVICE_NAME}-data
     test: false
@@ -344,17 +336,19 @@ parameters:
   generate: expression
   name: POSTGRESQL_USER
   required: true
+  value: sonar
 - description: Password for the PostgreSQL connection user.
   displayName: PostgreSQL Connection Password
   from: '[a-zA-Z0-9]{16}'
   generate: expression
   name: POSTGRESQL_PASSWORD
   required: true
+  value: sonar
 - description: Name of the PostgreSQL database accessed.
   displayName: PostgreSQL Database Name
   name: POSTGRESQL_DATABASE
   required: true
-  value: sampledb
+  value: sonar
 - description: Volume space available for data, e.g. 512Mi, 2Gi.
   displayName: Volume Capacity
   name: VOLUME_CAPACITY
