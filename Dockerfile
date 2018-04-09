@@ -11,7 +11,6 @@ ENV NAME=sonarqube \
 
 ENV APP_HOME=/opt/sonarqube
 ENV HOME=${APP_HOME}
-ENV PATH=$PATH:${APP_HOME}/bin
 
 ENV SONARQUBE_DOWNLOAD_URL=https://sonarsource.bintray.com/Distribution/sonarqube/sonarqube-${SONARQUBE_VERSION}.zip
 ENV SONARQUBE_ASC_DOWNLOAD_URL=https://sonarsource.bintray.com/Distribution/sonarqube/sonarqube-${SONARQUBE_VERSION}.zip.asc
@@ -33,14 +32,17 @@ RUN INSTALL_PACKAGES="unzip wget vim-enhanced tzdata nano gettext nss_wrapper cu
     wget --no-verbose -L -O sonarqube.zip ${SONARQUBE_DOWNLOAD_URL} && \
     unzip sonarqube.zip -d /opt && \
     mv /opt/sonarqube-$SONARQUBE_VERSION /opt/sonarqube && \
-    rm -f sonarqube.zip && \
-    useradd -m -u 1001 -g 0 -m -s /sbin/nologin -d ${HOME} sonar && \
+    rm -f sonarqube.zip
+
+COPY bin/ ${APP_HOME}/bin
+
+RUN useradd -m -u 1001 -g 0 -m -s /sbin/nologin -d ${HOME} sonar && \
     cat /etc/passwd > /etc/passwd.template && \
     chmod -R a+rwx ${APP_HOME} && \
     chown -R sonar:0 ${APP_HOME} && \
     chmod -R g=u /etc/passwd
 
-COPY bin/ ${APP_HOME}/bin
+ENV PATH=$PATH:${APP_HOME}/bin
 
 USER 1001
 
@@ -48,4 +50,4 @@ WORKDIR ${APP_HOME}
 
 VOLUME ${APP_HOME}/data
 
-ENTRYPOINT [ "./bin/run_sonarqube" ]
+ENTRYPOINT [ "run_sonarqube" ]
