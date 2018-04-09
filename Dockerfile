@@ -48,4 +48,4 @@ WORKDIR ${APP_HOME}
 
 VOLUME ${APP_HOME}/data
 
-ENTRYPOINT [ "run_sonarqube" ]
+ENTRYPOINT [ "./bin/run_sonarqube" ]
