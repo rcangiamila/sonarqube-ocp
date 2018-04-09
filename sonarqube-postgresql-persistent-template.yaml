@@ -374,7 +374,7 @@ parameters:
   displayName: SonarQube Memory Limit
   name: SONARQUBE_MEMORY_LIMIT
   required: true
-  value: "512Mi"
+  value: 2Gi
 - description: The name of the SonarQube Service exposed for the route.
   displayName: SonarQube Service Name
   name: SONARQUBE_SERVICE_NAME

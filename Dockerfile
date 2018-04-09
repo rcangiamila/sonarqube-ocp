@@ -32,7 +32,7 @@ RUN INSTALL_PACKAGES="unzip wget vim-enhanced tzdata nano gettext nss_wrapper cu
     rm -rf /var/cache/yum && \
     wget --no-verbose -L -O sonarqube.zip ${SONARQUBE_DOWNLOAD_URL} && \
     unzip sonarqube.zip -d /opt && \
-    mv /opt/sonarqube-$SONAR_VERSION /opt/sonarqube && \
+    mv /opt/sonarqube-$SONARQUBE_VERSION /opt/sonarqube && \
     rm -f sonarqube.zip && \
     useradd -m -u 1001 -g 0 -m -s /sbin/nologin -d ${HOME} sonar && \
     cat /etc/passwd > /etc/passwd.template && \
