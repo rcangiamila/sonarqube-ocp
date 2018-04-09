@@ -1,0 +1,9 @@
+#!/bin/sh
+
+if ! whoami &> /dev/null; then
+  if [ -w /etc/passwd ]; then
+    echo "Setting runtime User ... "
+    sed 's@git:x:1001:@sonar:x:'$(id -u)':@g' /etc/passwd.template > /etc/passwd
+  fi
+fi
+exec "$@"
