@@ -29,7 +29,8 @@ RUN INSTALL_PACKAGES="unzip wget vim-enhanced tzdata nano gettext nss_wrapper cu
     wget --no-verbose -L -O sonarqube.zip ${SONARQUBE_DOWNLOAD_URL} && \
     unzip sonarqube.zip -d /opt && \
     mv /opt/sonarqube-${SONARQUBE_VERSION} /opt/sonarqube && \
-    rm -f sonarqube.zip
+    rm -f sonarqube.zip* && \
+    rm -rf $APP_HOME/bin/*
 
 COPY bin/ ${APP_HOME}/bin
 
