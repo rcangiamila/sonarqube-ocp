@@ -26,4 +26,15 @@ spec:
       name: "docker.io/griso78/sonarqube:7.0"
     name: "7.0"
     referencePolicy:
+      type: Local
+  - annotations:
+      description: Provides a SonarQube 6.7.3 Continuous Inspection Service on CentOS 7.
+      openshift.io/display-name: SonarQube 6.7.3
+      tags: hidden,instant-app,sonarqube
+      version: "6.7.3"
+    from:
+      kind: DockerImage
+      name: "docker.io/griso78/sonarqube:6.7.3"
+    name: "6.7.3"
+    referencePolicy:
       type: Local  

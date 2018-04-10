@@ -192,7 +192,7 @@ objects:
         - ${SONARQUBE_SERVICE_NAME}
         from:
           kind: ImageStreamTag
-          name: ${SONARQUBE_SERVICE_NAME}:latest
+          name: ${SONARQUBE_SERVICE_NAME}:${SONARQUBE_VERSION}
           namespace: ${NAMESPACE}
       type: ImageChange
   status: {}
@@ -325,11 +325,11 @@ parameters:
   name: POSTGRESQL_VERSION
   required: true
   value: "9.5"
-- description: Version of SonarQube release to be used (6.7, 7.0)..
+- description: Version of SonarQube release to be used (6.7.3, 7.0)..
   displayName: SonarQube release
   name: SONARQUBE_VERSION
   required: true
-  value: "7.0"
+  value: "6.7.3"
 - description: Number of virtual CPUs to allocate for SonarQube.
   displayName: SonarQube CPU limit
   name: SONARQUBE_CPU_LIMIT
