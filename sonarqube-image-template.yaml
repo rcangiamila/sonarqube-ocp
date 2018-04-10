@@ -1,74 +1,29 @@
 apiVersion: v1
-kind: Template
+kind: ImageStream
 metadata:
-  creationTimestamp: null
-  labels:
-    name: sonarqube
   annotations:
-    description: The SonarQube OpenShift Image template
-    openshift.io/display-name: SonarQube Image
-    tags: instant-app,sonarqube
+    openshift.io/display-name: sonarqube
   name: sonarqube
-message: "Build and Push SonarQube Image"
-objects:
-- apiVersion: v1
-  kind: ImageStream
-  metadata:
-    labels:
-      application: ${SONARQUBE_SERVICE_NAME}
-    name: ${SONARQUBE_SERVICE_NAME}
-- apiVersion: v1
-  kind: BuildConfig
-  metadata:
-    annotations:
-      openshift.io/generated-by: OpenShiftNewApp
-    creationTimestamp: null
-    labels:
-      app: ${SONARQUBE_SERVICE_NAME}
-      appName: ${SONARQUBE_SERVICE_NAME}
-    name: ${SONARQUBE_SERVICE_NAME}
-  spec:
-    nodeSelector: null
-    output:
-      to:
-        kind: ImageStreamTag
-        name: ${SONARQUBE_SERVICE_NAME}:${SONARQUBE_VERSION}
-    postCommit: {}
-    resources: {}
-    runPolicy: Serial
-    source:
-      contextDir: /
-      git:
-        uri: https://github.com/rcangiamila/sonarqube-ocp.git
-      type: Git
-    strategy:
-      dockerStrategy:
-        dockerfilePath: Dockerfile
-        env:
-        - name: SONAR_PLUGINS_LIST
-          value: ${SONAR_PLUGINS_LIST}
-        - name: SONARQUBE_VERSION
-          value: ${SONARQUBE_VERSION}
-      type: Docker
-    triggers:
-    - github:
-        secret: tu5UyJNNhAyxXYrcnDTZ
-      type: GitHub
-    - generic:
-        secret: xhUU0WVDG3eA2Yu89zGe
-      type: Generic
-    - type: ConfigChange
-    - imageChange: {}
-      type: ImageChange
-  status:
-    lastVersion: 0
-parameters:
-- description: Version of SonarQube release to be used (6.7, 7.0)..
-  displayName: SonarQube release
-  name: SONARQUBE_VERSION
-  required: true
-  value: "7.0"
-- description: Space separated list of plugins (See https://docs.sonarqube.org/display/PLUG/Plugin+Version+Matrix)
-  displayName: SonarQube Plugins List
-  name: SONAR_PLUGINS_LIST
-  value: "findbugs buildbreaker git github gitlab"
+spec:
+  tags:
+  - annotations:
+      description: Provides a SonarQube Continuous Inspection Service on CentOS 7.
+      openshift.io/display-name: SonarQube (Latest)
+      tags: hidden,instant-app,sonarqube
+    from:
+      kind: ImageStreamTag
+      name: "7.0"
+    name: latest
+    referencePolicy:
+      type: Local
+  - annotations:
+      description: Provides a SonarQube 7.0 Continuous Inspection Service on CentOS 7.
+      openshift.io/display-name: SonarQube 7.0
+      tags: hidden,instant-app,sonarqube
+      version: "7.0"
+    from:
+      kind: DockerImage
+      name: "docker.io/griso78/sonarqube:7.0"
+    name: "7.0"
+    referencePolicy:
+      type: Local  
