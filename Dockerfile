@@ -4,10 +4,7 @@ MAINTAINER Roberto Cangiamila <roberto.cangiamila@par-tec.it>
 
 EXPOSE 9000
 
-ENV NAME=sonarqube \
-    SONARQUBE_VERSION=7.0 \
-    SONARQUBE_SHORT_VER=7 \
-    VERSION=0
+ARG SONARQUBE_VERSION
 
 ENV APP_HOME=/opt/sonarqube
 ENV HOME=${APP_HOME}
@@ -31,7 +28,7 @@ RUN INSTALL_PACKAGES="unzip wget vim-enhanced tzdata nano gettext nss_wrapper cu
     rm -rf /var/cache/yum && \
     wget --no-verbose -L -O sonarqube.zip ${SONARQUBE_DOWNLOAD_URL} && \
     unzip sonarqube.zip -d /opt && \
-    mv /opt/sonarqube-$SONARQUBE_VERSION /opt/sonarqube && \
+    mv /opt/sonarqube-${SONARQUBE_VERSION} /opt/sonarqube && \
     rm -f sonarqube.zip
 
 COPY bin/ ${APP_HOME}/bin

@@ -6,7 +6,6 @@ metadata:
     name: sonarqube
   annotations:
     description: The SonarQube OpenShift template
-    openshift.io/display-name: SonarQube + PostgreSQL
     tags: instant-app,sonarqube
   name: sonarqube
 message: "Login to SonarQube with the default admin user: admin/admin"
@@ -29,7 +28,6 @@ objects:
     creationTimestamp: null
     name: ${SONARQUBE_SERVICE_NAME}
   spec:
-    host: ${SONARQUBE_HOSTNAME}
     tls:
       insecureEdgeTerminationPolicy: Redirect
       termination: edge  
@@ -38,9 +36,7 @@ objects:
       name: ${SONARQUBE_SERVICE_NAME}
 - apiVersion: v1
   kind: Service
-  metadata:
-    annotations:
-      service.alpha.openshift.io/dependencies: '[{"name":"${DATABASE_SERVICE_NAME}","namespace":"","kind":"Service"}]' 
+  metadata:    
     name: ${SONARQUBE_SERVICE_NAME}
   spec:
     ports:
@@ -397,7 +393,3 @@ parameters:
 - description: Extra startup properties for SonarQube (in the form of "-Dsonar.someProperty=someValue")
   displayName: Extra SonarQube startup properties
   name: SONARQUBE_WEB_JVM_OPTS
-- description: The exposed hostname that will route to the SonarQube service, if left
-    blank a value will be defaulted.
-  displayName: SonarQube Hostname
-  name: SONARQUBE_HOSTNAME
