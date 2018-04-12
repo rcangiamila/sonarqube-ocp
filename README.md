@@ -1,1 +1,1 @@
-# sonarqube-ocp
+# sonarqube Openshift Container Platform
